@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     
     steps:
     - uses: actions/checkout@v4
@@ -35,12 +35,12 @@ jobs:
     
     - name: Check build result
       run: |
-        if [ -f "bin/*.apk" ]; then
+        if ls bin/*.apk 2>/dev/null; then
           echo "APK built successfully!"
           ls -la bin/
         else
           echo "Build failed, checking logs..."
-          tail -100 build.log
+          tail -200 build.log
           exit 1
         fi
     
