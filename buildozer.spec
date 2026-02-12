@@ -3,19 +3,21 @@ title = 智能每日清单
 package.name = smartdailychecklist
 package.domain = org
 source.dir = .
-source.include_exts = py,png,jpg,kv,atlas,py,txt,spec,ico,db,json,log
+source.include_exts = py,png,jpg,kv,atlas,ico
 version = 1.0.0
-requirements = python3,kivy,pillow,sqlite3,android
+requirements = python3,kivy==2.3.0,pillow,hostpython3
+p4a.branch = develop
 orientation = portrait
-fullscreen = 1
+fullscreen = 0
 android.api = 33
 android.minapi = 21
 android.sdk = 33
 android.ndk = 25b
 android.arch = arm64-v8a
-android.permissions = INTERNET,ACCESS_NETWORK_STATE
-android.api.color = True
-android.sdk_path = C:\\Users\\你的用户名\\AppData\\Local\\Android\\Sdk
+android.permissions = INTERNET
+android.skip_update = False
+android.accept_sdk_license = True
+android.gradle_dependencies = 
 
 [buildozer]
 log_level = 2
