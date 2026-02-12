@@ -24,25 +24,14 @@ jobs:
     
     - name: Install Python dependencies
       run: |
-        pip install --upgrade pip
-        pip install cython==0.29.36
+        pip install --upgrade pip setuptools wheel
+        pip install cython==0.29.33
         pip install buildozer==1.5.0
     
-    - name: Build APK with Buildozer
+    - name: Build APK
       run: |
-        echo "y" | buildozer android debug 2>&1 | tee build.log
-      continue-on-error: true
-    
-    - name: Check build result
-      run: |
-        if ls bin/*.apk 2>/dev/null; then
-          echo "APK built successfully!"
-          ls -la bin/
-        else
-          echo "Build failed, checking logs..."
-          tail -200 build.log
-          exit 1
-        fi
+        export JAVA_HOME=/usr/lib/jvm/temurin-17-jdk-amd64
+        echo "y" | buildozer android debug
     
     - name: Upload APK
       uses: actions/upload-artifact@v4
