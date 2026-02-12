@@ -10,12 +10,13 @@ orientation = portrait
 fullscreen = 0
 android.api = 31
 android.minapi = 21
-android.sdk = 31
 android.ndk = 25b
+android.sdk = 31
 android.arch = arm64-v8a
 android.permissions = INTERNET
 android.skip_update = False
 android.accept_sdk_license = True
+android.allow_backup = True
 
 [buildozer]
 log_level = 2
