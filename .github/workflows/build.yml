@@ -5,37 +5,100 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+env:
+  BUILDOZER_VERSION: 1.5.0
+  ANDROID_API: 31
+  ANDROID_MIN_API: 21
+  ANDROID_NDK_VERSION: 25b
+
 jobs:
   build:
     runs-on: ubuntu-22.04
     
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
     
     - name: Set up Python 3.10
       uses: actions/setup-python@v4
       with:
         python-version: '3.10'
+        cache: 'pip'
+    
+    - name: Install Java 17
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
     
     - name: Install system dependencies
       run: |
-        sudo apt-get update
-        sudo apt-get install -y git zip unzip openjdk-17-jdk autoconf libtool pkg-config libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev automake
+        sudo apt-get update -y
+        sudo apt-get install -y \
+          git zip unzip \
+          openjdk-17-jdk \
+          autoconf libtool pkg-config \
+          libncurses5-dev libncursesw5-dev libtinfo5 \
+          cmake libffi-dev libssl-dev \
+          automake build-essential
+    
+    - name: Cache Buildozer dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.buildozer/android/platform
+          ~/.buildozer/android/packages
+        key: buildozer-${{ runner.os }}-${{ hashFiles('buildozer.spec') }}
+        restore-keys: |
+          buildozer-${{ runner.os }}-
     
     - name: Install Python dependencies
       run: |
-        pip install --upgrade pip setuptools wheel
+        python -m pip install --upgrade pip setuptools wheel
         pip install cython==0.29.33
-        pip install buildozer==1.5.0
+        pip install buildozer==${{ env.BUILDOZER_VERSION }}
+    
+    - name: Validate Python code
+      run: |
+        python -m py_compile smart_daily_checklist_mobile.py
+        echo "Python code is valid!"
     
     - name: Build APK
       run: |
-        export JAVA_HOME=/usr/lib/jvm/temurin-17-jdk-amd64
-        echo "y" | buildozer android debug
+        export JAVA_HOME=$JAVA_HOME_17_X64
+        export ANDROID_HOME=~/.buildozer/android/platform/android-sdk
+        export ANDROID_SDK_ROOT=~/.buildozer/android/platform/android-sdk
+        export ANDROID_NDK_HOME=~/.buildozer/android/platform/android-ndk-r${{ env.ANDROID_NDK_VERSION }}
+        
+        echo "Starting build..."
+        echo "y" | buildozer android debug || {
+          echo "Build failed, retrying..."
+          echo "y" | buildozer android debug
+        }
+    
+    - name: List build output
+      if: always()
+      run: |
+        echo "=== Build output ==="
+        ls -la bin/ 2>/dev/null || echo "No bin directory"
+        ls -la .buildozer/android/platform/build-arm64-v8a/build/outputs/apk/debug/ 2>/dev/null || echo "No APK in build dir"
     
     - name: Upload APK
       uses: actions/upload-artifact@v4
       if: success()
       with:
         name: smart-daily-checklist-apk
-        path: bin/*.apk
+        path: |
+          bin/*.apk
+          .buildozer/android/platform/build-arm64-v8a/build/outputs/apk/debug/*.apk
+        if-no-files-found: warn
+    
+    - name: Upload build logs on failure
+      uses: actions/upload-artifact@v4
+      if: failure()
+      with:
+        name: build-logs
+        path: |
+          .buildozer/android/platform/build-arm64-v8a/build/outputs/logs/
+          build.log
+        if-no-files-found: ignore
